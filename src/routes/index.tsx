@@ -6,7 +6,8 @@ import ReactMarkdown from "react-markdown";
 import {
   Activity, AlertTriangle, BarChart3, Brain, Database, Download, FileWarning,
   Lightbulb, ListChecks, MessageSquare, Sparkles, Wand2, GitCompareArrows,
-  LayoutDashboard, ShieldCheck, ShieldAlert, ShieldX,
+  LayoutDashboard, ShieldCheck, ShieldAlert, ShieldX, ChevronLeft, ChevronRight,
+  Zap, Eye, Target, TrendingUp,
 } from "lucide-react";
 import { FileDrop } from "@/components/FileDrop";
 import { MetricCard } from "@/components/MetricCard";
@@ -21,10 +22,10 @@ import { exportReportPDF } from "@/lib/exportReport";
 import { askDataset } from "@/utils/ai.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(  {
   head: () => ({
     meta: [
-      { title: "AI Dataset Intelligence Engine" },
+      { title: "AI Dataset Intelligence Engine — Analyst Console" },
       { name: "description", content: "Upload a CSV or Excel file and get an analyst-grade intelligence report: dashboard, trust score, risks, insights, and an Ask-Your-Data chat." },
       { property: "og:title", content: "AI Dataset Intelligence Engine" },
       { property: "og:description", content: "Turn raw datasets into decision intelligence — dashboard, trust score, risks, contradictions, insights, and chat." },
@@ -46,6 +47,7 @@ function Home() {
   const [narrative, setNarrative] = useState<string>("");
   const [story, setStory] = useState<string>("");
   const [aiBusy, setAiBusy] = useState<"narrative" | "story" | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const ask = useServerFn(askDataset);
 
   const insights = useMemo(() => (profile ? generateInsights(profile) : []), [profile]);
@@ -87,14 +89,14 @@ function Home() {
     } finally { setAiBusy(null); }
   };
 
-  const tabs: { id: Tab; label: string; icon: typeof Database }[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "overview", label: "Profiling", icon: Database },
-    { id: "charts", label: "Visualizations", icon: BarChart3 },
-    { id: "insights", label: "Insights", icon: Lightbulb },
-    { id: "trust", label: "Trust & Risk", icon: AlertTriangle },
-    { id: "chat", label: "Ask your data", icon: MessageSquare },
-    { id: "report", label: "Report", icon: Download },
+  const tabs: { id: Tab; label: string; icon: typeof Database; desc: string }[] = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Overview" },
+    { id: "overview", label: "Profiling", icon: Database, desc: "Column analysis" },
+    { id: "charts", label: "Visualizations", icon: BarChart3, desc: "Auto-charts" },
+    { id: "insights", label: "Insights", icon: Lightbulb, desc: "Key findings" },
+    { id: "trust", label: "Trust & Risk", icon: AlertTriangle, desc: "Quality score" },
+    { id: "chat", label: "Ask your data", icon: MessageSquare, desc: "AI chat" },
+    { id: "report", label: "Report", icon: Download, desc: "Export PDF" },
   ];
 
   // Landing (no dataset) — full-width hero
@@ -104,15 +106,16 @@ function Home() {
         <TopBar persona={persona} setPersona={setPersona} hidePersona />
         <main className="mx-auto max-w-7xl px-6 py-8">
           <section className="relative">
-            <div className="absolute inset-0 -z-10 bg-grid opacity-30 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-            <div className="mx-auto max-w-3xl py-10 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                <Sparkles className="h-3 w-3 text-primary" /> analyst-grade · explainable
+            <div className="absolute inset-0 -z-10 bg-grid opacity-20 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+            <div className="mx-auto max-w-3xl py-12 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-primary">
+                <Sparkles className="h-3.5 w-3.5 animate-pulse-glow text-primary" /> analyst-grade · explainable · local-first
               </div>
-              <h2 className="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">
-                Turn raw data into <span className="text-gradient">decisions</span>.
+              <h2 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl">
+                Turn raw data into{" "}
+                <span className="text-gradient">decisions</span>.
               </h2>
-              <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground">
+              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground">
                 Drop a CSV or Excel file. Get a trust score, behavior narrative, automated visualizations
                 with reasoning, risks, contradictions, suggested questions, and a chat that knows your data.
               </p>
@@ -120,16 +123,30 @@ function Home() {
             <div className="mx-auto max-w-2xl">
               <FileDrop onFile={handleFile} busy={busy} />
             </div>
-            <div className="mx-auto mt-10 grid max-w-4xl gap-3 md:grid-cols-3">
+            <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-3">
               {[
-                { i: Activity, t: "Profiling Engine", d: "Types, missingness, duplicates, outliers, cardinality." },
-                { i: AlertTriangle, t: "Trust & Risk", d: "Weighted score plus contradictions and human-error signals." },
-                { i: Wand2, t: "AI Reasoning", d: "Narrative, persona-aware insights, data story, chat." },
-              ].map(({ i: Icon, t, d }) => (
-                <div key={t} className="surface-card p-4 transition hover:border-primary/60 hover:shadow-[0_0_0_1px_var(--color-primary)]">
-                  <Icon className="h-5 w-5 text-primary" />
-                  <div className="mt-2 text-sm font-semibold">{t}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{d}</p>
+                { i: Activity, t: "Profiling Engine", d: "Types, missingness, duplicates, outliers, cardinality — all computed instantly in the browser.", accent: "primary" },
+                { i: AlertTriangle, t: "Trust & Risk", d: "Weighted trust score with contradictions and human-error signals. Know your data quality at a glance.", accent: "warning" },
+                { i: Wand2, t: "AI Reasoning", d: "Behavior narrative, persona-aware insights, data story, and a chat that truly understands your dataset.", accent: "accent" },
+              ].map(({ i: Icon, t, d, accent }) => (
+                <div key={t} className="surface-card group relative overflow-hidden p-5 transition-all duration-300 hover:neon-border hover:scale-[1.02]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{ background: `linear-gradient(135deg, color-mix(in oklab, var(--color-${accent}) 5%, transparent), transparent)` }} />
+                  <div className="relative">
+                    <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-lg",
+                      accent === "primary" && "bg-primary/10",
+                      accent === "warning" && "bg-[color:var(--color-warning)]/10",
+                      accent === "accent" && "bg-accent/10",
+                    )}>
+                      <Icon className={cn("h-5 w-5",
+                        accent === "primary" && "text-primary",
+                        accent === "warning" && "text-[color:var(--color-warning)]",
+                        accent === "accent" && "text-accent",
+                      )} />
+                    </div>
+                    <div className="mt-3 text-sm font-semibold">{t}</div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{d}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -144,46 +161,80 @@ function Home() {
     <div className="min-h-screen">
       <TopBar persona={persona} setPersona={setPersona} />
       <div className="flex">
-        <aside className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-56 shrink-0 border-r border-border bg-card/30 p-3 md:block">
-          <div className="mb-3 px-2">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">active dataset</div>
-            <div className="truncate text-sm font-semibold" title={fileName}>{fileName}</div>
-          </div>
-          <nav className="flex flex-col gap-0.5">
+        {/* Sidebar */}
+        <aside className={cn(
+          "glass-sidebar sticky top-[57px] hidden h-[calc(100vh-57px)] shrink-0 flex-col p-3 transition-all duration-300 md:flex",
+          sidebarCollapsed ? "w-16" : "w-56",
+        )}>
+          {/* Dataset info */}
+          {!sidebarCollapsed && (
+            <div className="mb-4 px-2">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">active dataset</div>
+              <div className="mt-0.5 truncate text-sm font-semibold" title={fileName}>{fileName}</div>
+              {risk && (
+                <div className="mt-1.5">
+                  <RiskBadge level={risk.level} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Nav items */}
+          <nav className="flex flex-1 flex-col gap-0.5">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
+                title={sidebarCollapsed ? t.label : undefined}
                 className={cn(
-                  "group flex items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium transition",
+                  "group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-medium transition-all duration-200",
                   tab === t.id
-                    ? "bg-gradient-to-r from-primary/20 to-accent/20 text-foreground shadow-[inset_0_0_0_1px_var(--color-primary)]"
+                    ? "bg-gradient-to-r from-primary/15 to-accent/10 text-foreground shadow-[inset_0_0_0_1px_var(--color-primary)] glow-sm"
                     : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                  sidebarCollapsed && "justify-center px-0",
                 )}
               >
-                <t.icon className={cn("h-3.5 w-3.5", tab === t.id && "text-primary")} />
-                {t.label}
+                <t.icon className={cn("h-4 w-4 shrink-0 transition-colors", tab === t.id && "text-primary")} />
+                {!sidebarCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div>{t.label}</div>
+                    <div className="text-[10px] text-muted-foreground font-normal">{t.desc}</div>
+                  </div>
+                )}
               </button>
             ))}
           </nav>
-          <button
-            onClick={() => { setProfile(null); setRows([]); setFileName(""); setTab("dashboard"); }}
-            className="mt-4 w-full rounded-md border border-border bg-secondary/60 px-3 py-1.5 text-xs hover:border-primary"
-          >
-            Upload new dataset
-          </button>
+
+          {/* Sidebar footer */}
+          <div className="mt-auto space-y-2">
+            <button
+              onClick={() => { setProfile(null); setRows([]); setFileName(""); setTab("dashboard"); }}
+              className={cn(
+                "w-full rounded-lg border border-border bg-secondary/40 text-xs transition-all duration-200 hover:border-primary hover:bg-primary/5",
+                sidebarCollapsed ? "p-2.5 flex justify-center" : "px-3 py-2",
+              )}
+            >
+              {sidebarCollapsed ? <Database className="h-4 w-4" /> : "Upload new dataset"}
+            </button>
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="flex w-full items-center justify-center rounded-lg border border-border bg-secondary/20 p-1.5 text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+            >
+              {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </aside>
 
         <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
           {/* Mobile tab strip */}
-          <nav className="mb-6 flex gap-1 overflow-x-auto rounded-lg border border-border bg-card/40 p-1 md:hidden">
+          <nav className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card/40 p-1.5 md:hidden">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition",
-                  tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary",
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200",
+                  tab === t.id ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-secondary",
                 )}
               >
                 <t.icon className="h-3.5 w-3.5" /> {t.label}
@@ -191,7 +242,7 @@ function Home() {
             ))}
           </nav>
 
-          <div key={tab} className="animate-in fade-in-50 duration-300">
+          <div key={tab} className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
             {tab === "dashboard" && profile && risk && (
               <Dashboard profile={profile} risk={risk} insights={insights} fileName={fileName} onJump={setTab} />
             )}
@@ -218,56 +269,61 @@ function Home() {
   );
 }
 
+/* ─── TopBar ─── */
 function TopBar({ persona, setPersona, hidePersona }: { persona: Persona; setPersona: (p: Persona) => void; hidePersona?: boolean }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
+    <header className="glass-topbar sticky top-0 z-20">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-6 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-[0_0_20px_-2px_var(--color-primary)]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-[0_0_24px_-4px_var(--color-primary)]">
             <Brain className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-base font-semibold leading-tight">
               AI Dataset <span className="text-gradient">Intelligence Engine</span>
             </h1>
-            <p className="text-[11px] text-muted-foreground">Upload → Profile → Decide</p>
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Upload → Profile → Decide</p>
           </div>
         </div>
-        {!hidePersona && (
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">persona</span>
-            <select
-              value={persona}
-              onChange={(e) => setPersona(e.target.value as Persona)}
-              className="rounded-md border border-input bg-background px-2 py-1.5 text-xs"
-            >
-              <option value="business">Business</option>
-              <option value="student">Student</option>
-              <option value="developer">Developer</option>
-            </select>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {!hidePersona && (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider text-muted-foreground">persona</span>
+              <select
+                value={persona}
+                onChange={(e) => setPersona(e.target.value as Persona)}
+                className="rounded-lg border border-input bg-background/60 px-2.5 py-1.5 text-xs backdrop-blur-sm transition-colors focus:border-primary focus:outline-none"
+              >
+                <option value="business">Business</option>
+                <option value="student">Student</option>
+                <option value="developer">Developer</option>
+              </select>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
 }
 
+/* ─── Risk Badge ─── */
 function RiskBadge({ level }: { level: "low" | "medium" | "high" }) {
   const cfg = {
-    low: { Icon: ShieldCheck, color: "var(--color-success)", label: "LOW RISK" },
-    medium: { Icon: ShieldAlert, color: "var(--color-warning)", label: "MEDIUM RISK" },
-    high: { Icon: ShieldX, color: "var(--color-destructive)", label: "HIGH RISK" },
+    low: { Icon: ShieldCheck, color: "var(--color-success)", label: "LOW RISK", bg: "bg-[color:var(--color-success)]/10" },
+    medium: { Icon: ShieldAlert, color: "var(--color-warning)", label: "MEDIUM RISK", bg: "bg-[color:var(--color-warning)]/10" },
+    high: { Icon: ShieldX, color: "var(--color-destructive)", label: "HIGH RISK", bg: "bg-destructive/10" },
   }[level];
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-      style={{ background: `color-mix(in oklab, ${cfg.color} 18%, transparent)`, color: cfg.color }}
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
+      style={{ background: `color-mix(in oklab, ${cfg.color} 15%, transparent)`, color: cfg.color }}
     >
-      <cfg.Icon className="h-3.5 w-3.5" /> {cfg.label}
+      <cfg.Icon className="h-3 w-3" /> {cfg.label}
     </span>
   );
 }
 
+/* ─── Dashboard ─── */
 function Dashboard({
   profile, risk, insights, fileName, onJump,
 }: {
@@ -284,45 +340,53 @@ function Dashboard({
   return (
     <div className="space-y-6">
       {/* Header strip */}
-      <div className="surface-card flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">dataset</div>
-          <div className="mt-1 flex items-center gap-3">
-            <div className="truncate text-xl font-semibold" title={fileName}>{fileName}</div>
-            <RiskBadge level={risk.level} />
+      <div className="surface-card relative overflow-hidden p-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">active dataset</div>
+            <div className="mt-1 flex items-center gap-3">
+              <div className="truncate text-xl font-bold" title={fileName}>{fileName}</div>
+              <RiskBadge level={risk.level} />
+            </div>
+            {risk.reasons.length > 0 && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                <span className="text-foreground/70 font-medium">Risk drivers:</span> {risk.reasons.join(" · ")}
+              </p>
+            )}
           </div>
-          {risk.reasons.length > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">Driven by: {risk.reasons.join(" · ")}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">trust</div>
-            <div className="text-3xl font-bold tabular-nums" style={{ color: trustColor }}>{profile.trustScore}</div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">trust score</div>
+              <div className="text-4xl font-bold tabular-nums animate-pulse-glow" style={{ color: trustColor }}>{profile.trustScore}</div>
+            </div>
+            <div className="h-12 w-px bg-border/50" />
+            <button
+              onClick={() => onJump("report")}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-6px_var(--color-primary)] transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+            >
+              <Download className="h-4 w-4" /> Export Report
+            </button>
           </div>
-          <div className="h-10 w-px bg-border" />
-          <button
-            onClick={() => onJump("report")}
-            className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-primary to-accent px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-6px_var(--color-primary)] transition hover:opacity-90"
-          >
-            <Download className="h-4 w-4" /> Report
-          </button>
         </div>
       </div>
 
       {/* KPI grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Rows" value={profile.rowCount.toLocaleString()} accent="primary" />
-        <MetricCard label="Columns" value={profile.colCount} accent="primary" />
+        <MetricCard label="Rows" value={profile.rowCount.toLocaleString()} icon={Database} accent="primary" />
+        <MetricCard label="Columns" value={profile.colCount} icon={BarChart3} accent="primary" />
         <MetricCard
           label="Missing cells"
           value={`${profile.missingPct.toFixed(1)}%`}
-          hint={`${profile.missingCells.toLocaleString()} cells`}
+          hint={`${profile.missingCells.toLocaleString()} total cells missing`}
+          icon={Eye}
           accent={profile.missingPct > 10 ? "warning" : "success"}
         />
         <MetricCard
           label="Duplicate rows"
           value={profile.duplicateRows.toLocaleString()}
+          hint={profile.duplicateRows > 0 ? "May affect analysis accuracy" : "Clean — no duplicates found"}
+          icon={Target}
           accent={profile.duplicateRows ? "warning" : "success"}
         />
       </div>
@@ -330,22 +394,27 @@ function Dashboard({
       {/* Highlights */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="surface-card p-5 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <Lightbulb className="h-4 w-4 text-primary" /> Top 3 insights
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                <Lightbulb className="h-4 w-4 text-primary" />
+              </div>
+              Top insights
             </h3>
-            <button onClick={() => onJump("insights")} className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-primary">view all →</button>
+            <button onClick={() => onJump("insights")} className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+              view all <ChevronRight className="h-3 w-3" />
+            </button>
           </div>
           <ul className="space-y-3">
             {insights.slice(0, 3).map((i, idx) => (
-              <li key={idx} className="rounded-md border border-border bg-background/40 p-3">
-                <div className="flex items-start gap-2">
-                  <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-primary">{i.tag}</span>
+              <li key={idx} className="rounded-lg border border-border/60 bg-background/30 p-3.5 transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.02]">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-primary">{i.tag}</span>
                   <div className="flex-1 text-sm">
                     <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>{i.text}</ReactMarkdown>
                     {i.why && (
-                      <div className="mt-1.5 text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground/80">Why this matters: </span>{i.why}
+                      <div className="mt-2 rounded-md bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground">
+                        <span className="font-semibold text-primary/80">Why this matters: </span>{i.why}
                       </div>
                     )}
                   </div>
@@ -357,15 +426,20 @@ function Dashboard({
         </div>
 
         <div className="surface-card p-5">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <BarChart3 className="h-4 w-4 text-primary" /> Quick chart
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/10">
+                <BarChart3 className="h-4 w-4 text-accent" />
+              </div>
+              Quick chart
             </h3>
-            <button onClick={() => onJump("charts")} className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-primary">all charts →</button>
+            <button onClick={() => onJump("charts")} className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+              all charts <ChevronRight className="h-3 w-3" />
+            </button>
           </div>
           {miniData.length ? (
             <>
-              <div className="mb-1 text-xs text-muted-foreground">Top categories in <span className="font-mono text-foreground">{firstCat?.name}</span></div>
+              <div className="mb-2 text-xs text-muted-foreground">Top categories in <span className="font-mono text-foreground">{firstCat?.name}</span></div>
               <MiniBarChart data={miniData} />
             </>
           ) : (
@@ -377,6 +451,7 @@ function Dashboard({
   );
 }
 
+/* ─── Profiling ─── */
 function Profiling({
   profile, forecast, narrative, runNarrative, aiBusy,
 }: { profile: DatasetProfile; forecast: string | null; narrative: string; runNarrative: () => void; aiBusy: boolean }) {
@@ -384,13 +459,18 @@ function Profiling({
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-3">
         <TrustGauge score={profile.trustScore} />
-        <div className="surface-card p-4 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Behavior narrative</h3>
+        <div className="surface-card p-5 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              Behavior narrative
+            </h3>
             <button
               onClick={runNarrative}
               disabled={aiBusy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/60 px-2.5 py-1 text-xs hover:border-primary disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:border-primary hover:bg-primary/5 disabled:opacity-40"
             >
               {aiBusy && <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />}
               {aiBusy ? "Thinking…" : narrative ? "Regenerate" : "Generate with AI"}
@@ -401,13 +481,20 @@ function Profiling({
               <ReactMarkdown>{narrative}</ReactMarkdown>
             </div>
           ) : (
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              {profile.behavior.map((b) => <li key={b}>• {b}</li>)}
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {profile.behavior.map((b) => (
+                <li key={b} className="flex items-start gap-2">
+                  <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60" />
+                  <span>{b}</span>
+                </li>
+              ))}
             </ul>
           )}
           {forecast && (
-            <div className="mt-3 rounded-md border border-border bg-background/40 p-3 text-xs">
-              <div className="mb-1 font-mono uppercase tracking-wider text-primary">trend forecast</div>
+            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3.5 text-xs">
+              <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-primary">
+                <TrendingUp className="h-3 w-3" /> trend forecast
+              </div>
               <div className="prose prose-sm prose-invert max-w-none">
                 <ReactMarkdown>{forecast}</ReactMarkdown>
               </div>
@@ -422,40 +509,44 @@ function Profiling({
   );
 }
 
+/* ─── Column Table ─── */
 function ColumnTable({ profile }: { profile: DatasetProfile }) {
   return (
     <div className="surface-card overflow-hidden">
-      <div className="border-b border-border px-4 py-3 text-sm font-semibold">Column profile</div>
+      <div className="border-b border-border/60 px-5 py-3.5 text-sm font-semibold flex items-center gap-2">
+        <Database className="h-4 w-4 text-primary" /> Column profile
+        <span className="ml-auto text-[10px] font-mono text-muted-foreground uppercase tracking-wider">{profile.colCount} columns</span>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
-          <thead className="bg-secondary/40 text-muted-foreground">
+          <thead className="bg-secondary/30 text-muted-foreground">
             <tr>
               {["Column", "Type", "Missing %", "Unique", "Min", "Max", "Mean", "Notes"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {profile.columns.map((c) => (
-              <tr key={c.name} className="border-t border-border/60 hover:bg-secondary/20">
-                <td className="px-3 py-2 font-medium">{c.name}</td>
-                <td className="px-3 py-2"><TypePill type={c.type} /></td>
-                <td className="px-3 py-2 tabular-nums">
+              <tr key={c.name} className="border-t border-border/40 transition-colors hover:bg-primary/[0.03]">
+                <td className="px-3 py-2.5 font-medium">{c.name}</td>
+                <td className="px-3 py-2.5"><TypePill type={c.type} /></td>
+                <td className="px-3 py-2.5 tabular-nums">
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full bg-[color:var(--color-warning)]" style={{ width: `${Math.min(100, c.missingPct)}%` }} />
+                      <div className="h-full rounded-full bg-[color:var(--color-warning)] transition-all duration-500" style={{ width: `${Math.min(100, c.missingPct)}%` }} />
                     </div>
-                    {c.missingPct.toFixed(1)}%
+                    <span className={cn(c.missingPct > 20 && "text-[color:var(--color-warning)] font-semibold")}>{c.missingPct.toFixed(1)}%</span>
                   </div>
                 </td>
-                <td className="px-3 py-2 tabular-nums">{c.unique}</td>
-                <td className="px-3 py-2 tabular-nums">{c.min !== undefined ? c.min.toFixed(2) : "—"}</td>
-                <td className="px-3 py-2 tabular-nums">{c.max !== undefined ? c.max.toFixed(2) : "—"}</td>
-                <td className="px-3 py-2 tabular-nums">{c.mean !== undefined ? c.mean.toFixed(2) : "—"}</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {c.constant && <span className="mr-1 rounded bg-destructive/20 px-1.5 py-0.5 text-[10px] text-destructive">constant</span>}
-                  {c.highCardinality && <span className="mr-1 rounded bg-accent/20 px-1.5 py-0.5 text-[10px] text-accent">high-card</span>}
-                  {(c.outliers ?? 0) > 0 && <span className="mr-1 rounded bg-[color:var(--color-warning)]/20 px-1.5 py-0.5 text-[10px] text-[color:var(--color-warning)]">{c.outliers} outliers</span>}
+                <td className="px-3 py-2.5 tabular-nums">{c.unique}</td>
+                <td className="px-3 py-2.5 tabular-nums">{c.min !== undefined ? c.min.toFixed(2) : "—"}</td>
+                <td className="px-3 py-2.5 tabular-nums">{c.max !== undefined ? c.max.toFixed(2) : "—"}</td>
+                <td className="px-3 py-2.5 tabular-nums">{c.mean !== undefined ? c.mean.toFixed(2) : "—"}</td>
+                <td className="px-3 py-2.5 text-muted-foreground">
+                  {c.constant && <span className="mr-1 rounded-md bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">constant</span>}
+                  {c.highCardinality && <span className="mr-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">high-card</span>}
+                  {(c.outliers ?? 0) > 0 && <span className="mr-1 rounded-md bg-[color:var(--color-warning)]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--color-warning)]">{c.outliers} outliers</span>}
                 </td>
               </tr>
             ))}
@@ -466,36 +557,41 @@ function ColumnTable({ profile }: { profile: DatasetProfile }) {
   );
 }
 
+/* ─── TypePill ─── */
 function TypePill({ type }: { type: string }) {
   const map: Record<string, string> = {
-    numeric: "bg-primary/15 text-primary",
-    categorical: "bg-accent/15 text-accent",
-    datetime: "bg-[color:var(--color-info)]/15 text-[color:var(--color-info)]",
-    boolean: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]",
-    text: "bg-secondary text-muted-foreground",
-    id: "bg-secondary text-muted-foreground",
+    numeric: "bg-primary/15 text-primary border-primary/20",
+    categorical: "bg-accent/15 text-accent border-accent/20",
+    datetime: "bg-[color:var(--color-info)]/15 text-[color:var(--color-info)] border-[color:var(--color-info)]/20",
+    boolean: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)] border-[color:var(--color-success)]/20",
+    text: "bg-secondary text-muted-foreground border-border",
+    id: "bg-secondary text-muted-foreground border-border",
   };
-  return <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-mono", map[type])}>{type}</span>;
+  return <span className={cn("rounded-md border px-1.5 py-0.5 text-[10px] font-mono font-medium", map[type])}>{type}</span>;
 }
 
+/* ─── Preview Table ─── */
 function PreviewTable({ profile }: { profile: DatasetProfile }) {
   return (
     <div className="surface-card overflow-hidden">
-      <div className="border-b border-border px-4 py-3 text-sm font-semibold">Preview · first {profile.preview.length} rows</div>
+      <div className="border-b border-border/60 px-5 py-3.5 text-sm font-semibold flex items-center gap-2">
+        <Eye className="h-4 w-4 text-primary" /> Preview
+        <span className="ml-auto text-[10px] font-mono text-muted-foreground uppercase tracking-wider">first {profile.preview.length} rows</span>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
-          <thead className="bg-secondary/40 text-muted-foreground">
+          <thead className="bg-secondary/30 text-muted-foreground">
             <tr>
               {profile.headers.map((h) => (
-                <th key={h} className="whitespace-nowrap px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider">{h}</th>
+                <th key={h} className="whitespace-nowrap px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {profile.preview.map((r, i) => (
-              <tr key={i} className="border-t border-border/60">
+              <tr key={i} className="border-t border-border/40 transition-colors hover:bg-primary/[0.02]">
                 {profile.headers.map((h) => (
-                  <td key={h} className="whitespace-nowrap px-3 py-1.5">{String(r[h] ?? "")}</td>
+                  <td key={h} className="whitespace-nowrap px-3 py-2">{String(r[h] ?? "")}</td>
                 ))}
               </tr>
             ))}
@@ -506,30 +602,36 @@ function PreviewTable({ profile }: { profile: DatasetProfile }) {
   );
 }
 
+/* ─── Insights ─── */
 function Insights({
   insights, profile,
 }: { insights: { text: string; why?: string; confidence: number; tag: string }[]; profile: DatasetProfile }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="surface-card p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Lightbulb className="h-4 w-4 text-primary" /> Key findings</h3>
+      <div className="surface-card p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+            <Lightbulb className="h-4 w-4 text-primary" />
+          </div>
+          Key findings
+        </h3>
         <ul className="space-y-3">
           {insights.map((i, idx) => (
-            <li key={idx} className="rounded-md border border-border bg-background/40 p-3 transition hover:border-primary/40">
+            <li key={idx} className="group rounded-lg border border-border/60 bg-background/30 p-3.5 transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.02]">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-6 min-w-[2.5rem] items-center justify-center rounded bg-primary/15 font-mono text-[10px] text-primary">
+                <div className="mt-0.5 flex h-7 min-w-[3rem] items-center justify-center rounded-md bg-primary/10 font-mono text-[10px] font-semibold text-primary">
                   {(i.confidence * 100).toFixed(0)}%
                 </div>
                 <div className="flex-1">
-                  <span className="mr-2 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{i.tag}</span>
+                  <span className="mr-2 rounded-md bg-secondary px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{i.tag}</span>
                   <span className="text-sm">
                     <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
                       {i.text}
                     </ReactMarkdown>
                   </span>
                   {i.why && (
-                    <div className="mt-1.5 text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground/80">Why this matters: </span>{i.why}
+                    <div className="mt-2 rounded-md bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground">
+                      <span className="font-semibold text-primary/80">Why this matters: </span>{i.why}
                     </div>
                   )}
                 </div>
@@ -538,19 +640,37 @@ function Insights({
           ))}
         </ul>
       </div>
-      <div className="surface-card p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><MessageSquare className="h-4 w-4 text-primary" /> Suggested questions</h3>
+
+      <div className="surface-card p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/10">
+            <MessageSquare className="h-4 w-4 text-accent" />
+          </div>
+          Suggested questions
+        </h3>
         <ul className="space-y-2">
           {profile.suggestedQuestions.map((q) => (
-            <li key={q} className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm transition hover:border-primary/50 hover:text-primary">{q}</li>
+            <li key={q} className="group flex items-center gap-2 rounded-lg border border-border/60 bg-background/30 px-3.5 py-2.5 text-sm transition-all duration-200 hover:border-primary/30 hover:text-primary cursor-pointer">
+              <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+              <span>{q}</span>
+            </li>
           ))}
         </ul>
       </div>
-      <div className="surface-card p-4 lg:col-span-2">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><ListChecks className="h-4 w-4 text-primary" /> Recommended actions</h3>
+
+      <div className="surface-card p-5 lg:col-span-2">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--color-success)]/10">
+            <ListChecks className="h-4 w-4 text-[color:var(--color-success)]" />
+          </div>
+          Recommended actions
+        </h3>
         <div className="grid gap-2 md:grid-cols-2">
           {profile.recommendedActions.map((a) => (
-            <div key={a} className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm">→ {a}</div>
+            <div key={a} className="flex items-start gap-2 rounded-lg border border-border/60 bg-background/30 px-3.5 py-2.5 text-sm transition-all duration-200 hover:border-[color:var(--color-success)]/30">
+              <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--color-success)]" />
+              <span>{a}</span>
+            </div>
           ))}
         </div>
       </div>
@@ -558,26 +678,33 @@ function Insights({
   );
 }
 
+/* ─── Trust & Risk ─── */
 function TrustRisk({ profile }: { profile: DatasetProfile }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <div className="surface-card p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Activity className="h-4 w-4 text-primary" /> Trust breakdown</h3>
-        <div className="space-y-3">
+      <div className="surface-card p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          Trust breakdown
+        </h3>
+        <div className="space-y-4">
           {profile.trustBreakdown.map((b) => (
             <div key={b.label}>
-              <div className="mb-1 flex items-baseline justify-between text-xs">
+              <div className="mb-1.5 flex items-baseline justify-between text-xs">
                 <span className="font-medium">{b.label}</span>
                 <span className="font-mono tabular-nums text-muted-foreground">{b.score.toFixed(0)} · w{(b.weight * 100).toFixed(0)}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500" style={{ width: `${b.score}%` }} />
+                <div className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700 ease-out" style={{ width: `${b.score}%` }} />
               </div>
               <div className="mt-1 text-[11px] text-muted-foreground">{b.note}</div>
             </div>
           ))}
         </div>
       </div>
+
       <SeverityList title="Risks" icon={AlertTriangle} items={profile.risks} empty="No major risks detected." />
       <SeverityList title="Contradictions" icon={GitCompareArrows} items={profile.contradictions} empty="No internal contradictions detected." variant="warning" />
       <HumanErrorPanel items={profile.humanErrors} />
@@ -585,13 +712,20 @@ function TrustRisk({ profile }: { profile: DatasetProfile }) {
   );
 }
 
+/* ─── Severity List ─── */
 function SeverityList({
   title, icon: Icon, items, empty, variant = "warning",
 }: { title: string; icon: typeof AlertTriangle; items: string[]; empty: string; variant?: "warning" | "info" }) {
   return (
-    <div className="surface-card p-4">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <Icon className={cn("h-4 w-4", variant === "warning" ? "text-[color:var(--color-warning)]" : "text-[color:var(--color-info)]")} /> {title}
+    <div className="surface-card p-5">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <div className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-md",
+          variant === "warning" ? "bg-[color:var(--color-warning)]/10" : "bg-[color:var(--color-info)]/10",
+        )}>
+          <Icon className={cn("h-4 w-4", variant === "warning" ? "text-[color:var(--color-warning)]" : "text-[color:var(--color-info)]")} />
+        </div>
+        {title}
       </h3>
       {items.length ? (
         <ul className="space-y-2">
@@ -601,12 +735,12 @@ function SeverityList({
             return (
               <li
                 key={r}
-                className="flex gap-2 rounded-md border-l-2 bg-background/40 px-3 py-2 text-sm"
+                className="flex gap-2 rounded-lg border-l-2 bg-background/30 px-3.5 py-2.5 text-sm transition-all duration-200 hover:bg-background/50"
                 style={{ borderLeftColor: sty.color }}
               >
                 <span
-                  className="mt-0.5 inline-flex h-5 shrink-0 items-center rounded px-1.5 font-mono text-[9px] font-bold tracking-wider"
-                  style={{ background: `color-mix(in oklab, ${sty.color} 20%, transparent)`, color: sty.color }}
+                  className="mt-0.5 inline-flex h-5 shrink-0 items-center rounded-md px-1.5 font-mono text-[9px] font-bold tracking-wider"
+                  style={{ background: `color-mix(in oklab, ${sty.color} 15%, transparent)`, color: sty.color }}
                 >
                   {sty.label}
                 </span>
@@ -616,7 +750,7 @@ function SeverityList({
           })}
         </ul>
       ) : (
-        <div className="flex items-center gap-2 rounded-md border border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 px-3 py-2 text-sm text-[color:var(--color-success)]">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/5 px-3.5 py-2.5 text-sm text-[color:var(--color-success)]">
           <ShieldCheck className="h-4 w-4" /> {empty}
         </div>
       )}
@@ -624,11 +758,15 @@ function SeverityList({
   );
 }
 
+/* ─── Human Error Panel ─── */
 function HumanErrorPanel({ items }: { items: string[] }) {
   return (
-    <div className="surface-card p-4 lg:col-span-3">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <FileWarning className="h-4 w-4 text-destructive" /> Human-error signals
+    <div className="surface-card p-5 lg:col-span-3">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-destructive/10">
+          <FileWarning className="h-4 w-4 text-destructive" />
+        </div>
+        Human-error signals
       </h3>
       {items.length ? (
         <div className="grid gap-2 md:grid-cols-2">
@@ -639,13 +777,13 @@ function HumanErrorPanel({ items }: { items: string[] }) {
             return (
               <div
                 key={r}
-                className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
+                className="rounded-lg border border-destructive/20 bg-destructive/5 px-3.5 py-2.5 text-sm transition-all duration-200 hover:border-destructive/40"
               >
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                   <div className="flex-1">
                     {col && (
-                      <span className="mr-1.5 rounded bg-destructive/20 px-1.5 py-0.5 font-mono text-[10px] text-destructive">
+                      <span className="mr-1.5 rounded-md bg-destructive/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-destructive">
                         {col}
                       </span>
                     )}
@@ -657,7 +795,7 @@ function HumanErrorPanel({ items }: { items: string[] }) {
           })}
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-md border border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 px-3 py-2 text-sm text-[color:var(--color-success)]">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/5 px-3.5 py-2.5 text-sm text-[color:var(--color-success)]">
           <ShieldCheck className="h-4 w-4" /> No suspicious values detected.
         </div>
       )}
@@ -665,6 +803,7 @@ function HumanErrorPanel({ items }: { items: string[] }) {
   );
 }
 
+/* ─── Report Tab ─── */
 function ReportTab({
   profile, fileName, insights, narrative, story, runStory, aiBusy,
 }: {
@@ -673,38 +812,59 @@ function ReportTab({
 }) {
   return (
     <div className="space-y-6">
-      <div className="surface-card p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="h-4 w-4 text-primary" /> Data Story (AI-generated)</h3>
+      {/* Data Story section */}
+      <div className="surface-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/10">
+              <Sparkles className="h-4 w-4 text-accent" />
+            </div>
+            Data Story
+            <span className="rounded-md bg-secondary px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">AI-generated</span>
+          </h3>
           <button
             onClick={runStory}
             disabled={aiBusy}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/60 px-2.5 py-1 text-xs hover:border-primary disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:border-primary hover:bg-primary/5 disabled:opacity-40"
           >
             {aiBusy && <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />}
-            {aiBusy ? "Composing…" : story ? "Regenerate" : "Generate Data Story"}
+            {aiBusy ? "Composing…" : story ? "Regenerate story" : "Generate Data Story"}
           </button>
         </div>
         {story ? (
-          <div className="prose prose-sm prose-invert max-w-none prose-headings:text-foreground prose-h2:mt-5 prose-h2:mb-2 prose-h2:text-base prose-h2:font-semibold prose-h2:text-primary prose-strong:text-foreground prose-li:my-1">
+          <div className="prose prose-sm prose-invert max-w-none prose-headings:text-foreground prose-h2:mt-6 prose-h2:mb-3 prose-h2:text-base prose-h2:font-semibold prose-h2:text-primary prose-strong:text-foreground prose-li:my-1.5
+            [&>h2]:flex [&>h2]:items-center [&>h2]:gap-2 [&>h2]:before:content-[''] [&>h2]:before:h-5 [&>h2]:before:w-1 [&>h2]:before:rounded-full [&>h2]:before:bg-gradient-to-b [&>h2]:before:from-primary [&>h2]:before:to-accent">
             <ReactMarkdown>{story}</ReactMarkdown>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Click "Generate Data Story" to compose a presentation-ready summary with title, key insights, severity-tagged risks, and recommendations.</p>
+          <div className="rounded-lg border border-dashed border-border bg-background/20 p-8 text-center">
+            <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/40" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Click "Generate Data Story" to compose a presentation-ready summary with title, key insights, severity-tagged risks, and recommendations.
+            </p>
+          </div>
         )}
       </div>
 
-      <div className="surface-card flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Export full PDF report</h3>
-          <p className="text-xs text-muted-foreground">Includes overview, narrative, insights with “why this matters”, risks, contradictions, recommendations, column profile, and the data story.</p>
+      {/* Export PDF card */}
+      <div className="surface-card relative overflow-hidden p-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Download className="h-4 w-4 text-primary" /> Export full PDF report
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-lg">
+              Includes overview, narrative, insights with "why this matters", risks, contradictions, recommendations, column profile, and the data story.
+            </p>
+          </div>
+          <button
+            onClick={() => exportReportPDF({ profile, fileName, insights, story, narrative })}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-6px_var(--color-primary)] transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+          >
+            <Download className="h-4 w-4" /> Download PDF
+          </button>
         </div>
-        <button
-          onClick={() => exportReportPDF({ profile, fileName, insights, story, narrative })}
-          className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-primary to-accent px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-6px_var(--color-primary)] transition hover:opacity-90"
-        >
-          <Download className="h-4 w-4" /> Download PDF
-        </button>
       </div>
     </div>
   );
